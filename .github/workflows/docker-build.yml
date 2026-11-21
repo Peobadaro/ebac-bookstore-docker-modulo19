@@ -1,0 +1,33 @@
+name: Docker build e teste
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixa o código
+        uses: actions/checkout@v4
+
+      - name: docker build
+        run: docker build -t bookstore:latest .
+
+      - name: Roda os testes dentro do container
+        run: docker run --rm bookstore:latest python manage.py test
+
+      - name: docker run e teste da API
+        run: |
+          docker run -d --name bookstore -p 8000:8000 bookstore:latest
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/bookstore/v1/product/ && break
+            sleep 2
+          done
+          echo
+          echo "GET /bookstore/v1/product/ -> $(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/bookstore/v1/product/)"
+          echo "GET /bookstore/v1/order/   -> $(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/bookstore/v1/order/)"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/bookstore/v1/product/)" = "200"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/bookstore/v1/order/)" = "401"
+          docker logs bookstore
+          docker rm -f bookstore

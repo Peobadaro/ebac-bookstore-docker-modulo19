@@ -80,3 +80,22 @@ curl -H "Authorization: Token SEU_TOKEN" http://127.0.0.1:8000/bookstore/v1/orde
 ```
 
 Sem token a API responde **401**.
+
+## Docker
+
+O `Dockerfile` usa a imagem `python:3.13-slim`, instala o Poetry e as dependências e sobe o Django na porta 8000.
+
+```bash
+docker build -t bookstore .
+docker run --rm -p 8000:8000 bookstore
+```
+
+Depois é só abrir http://localhost:8000/bookstore/v1/product/
+
+Para rodar os testes dentro do container:
+
+```bash
+docker run --rm bookstore python manage.py test
+```
+
+O workflow `.github/workflows/docker-build.yml` faz esse mesmo build, roda os testes no container e testa a API a cada push.
